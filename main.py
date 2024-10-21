@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter
-from mind import Mind
+from kernel import Mind
 from models import Content
 from dotenv import load_dotenv
 

@@ -6,7 +6,7 @@ from database import DataBase
 import os
 
 
-class Mind:
+class Kernel:
     __chat_gpt: ChatGPT
     __database_chat: DataBase
     __database_octapipe: DataBase
