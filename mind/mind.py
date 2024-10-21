@@ -33,15 +33,15 @@ class Mind:
         self.__prompts = self.__database_chat.consult(query='SELECT id, prompt FROM prompts')
 
     def respond(self, customer_question, customer_uuid: str, owner_user_uuid: str) -> str:
-        entity_and_context = self.define_entity_and_context(customer_question=customer_question)
-        questions = self.get_questions(entity=entity_and_context[0], context=entity_and_context[1])
-        question = self.define_question(customer_question, questions)
-        customer_id, owner_user_id = self.get_customer_id_and_user_id(customer_uuid, owner_user_uuid)
-        query = self.make_query(customer_id, owner_user_id, query=question[4], customer_question=customer_question)
-        response = self.generate_response(customer_question=customer_question, query=query)
+        entity_and_context = self.__define_entity_and_context(customer_question=customer_question)
+        questions = self.__get_questions(entity=entity_and_context[0], context=entity_and_context[1])
+        question = self.__define_question(customer_question, questions)
+        customer_id, owner_user_id = self.__get_customer_id_and_user_id(customer_uuid, owner_user_uuid)
+        query = self.__make_query(customer_id, owner_user_id, query=question[4], customer_question=customer_question)
+        response = self.__generate_response(customer_question=customer_question, query=query)
         return response
-
-    def define_entity_and_context(self, customer_question: str):
+               
+    def __define_entity_and_context(self, customer_question: str) -> tuple:
         query = 'SELECT DISTINCT entity, context FROM questions'
         result = self.__database_chat.consult(query=query)
         params = {'customer_question': customer_question, 'result': result}
@@ -49,12 +49,12 @@ class Mind:
         response = self.__chat_gpt.respond(prompt=prompt)
         return ast.literal_eval(response)
 
-    def get_questions(self, entity: str, context: str):
+    def __get_questions(self, entity: str, context: str) -> list[tuple]:
         query = f'SELECT * FROM questions WHERE entity = "{entity}" AND context = "{context}"'
         result = self.__database_chat.consult(query=query)
         return result
 
-    def define_question(self, customer_question: str, questions: str) -> str:
+    def __define_question(self, customer_question: str, questions: list[tuple]) -> tuple:
         formatted_questions = "\n".join([f"{question[0]} - {question[3]}" for question in questions])
         params = {'customer_question': customer_question, 'formatted_questions': formatted_questions}
         prompt = next(prompt for prompt in self.__prompts if prompt[0] == 2)[1].format(**params)
@@ -62,7 +62,7 @@ class Mind:
         question = next(question for question in questions if question[0] == int(response))
         return question
 
-    def get_customer_id_and_user_id(self, customer_uuid: str, owner_user_uuid: str) -> (str, str):
+    def __get_customer_id_and_user_id(self, customer_uuid: str, owner_user_uuid: str) -> (str, str):
         query_users = f'SELECT id, customer_id FROM users WHERE uuid = "{owner_user_uuid}"'
         query_customers = f'SELECT id FROM customers WHERE uuid = "{customer_uuid}"'
         user_result = self.__database_octapipe.consult(query=query_users)[0]
@@ -73,7 +73,7 @@ class Mind:
             raise ValueError(f'customer_id {customer_id} does not match owner_user_id {owner_user_id}')
         return customer_id, owner_user_id
 
-    def make_query(self, customer_id: int, owner_user_id: int, query: str, customer_question: str) -> str:
+    def __make_query(self, customer_id: int, owner_user_id: int, query: str, customer_question: str) -> str:
         placeholders = {'customer_id': customer_id, 'owner_user_id': owner_user_id}
         query_placeholders = re.findall(r'\{(.*?)}', query)
         placeholders.update({placeholder: '' for placeholder in query_placeholders if placeholder not in placeholders})
@@ -83,7 +83,7 @@ class Mind:
         query_formatted = query.format(**ast.literal_eval(filled_placeholders))
         return query_formatted
 
-    def generate_response(self, customer_question: str, query: str) -> str:
+    def __generate_response(self, customer_question: str, query: str) -> str:
         response = self.__database_octapipe.consult(query=query)[0][0]
         params = {'customer_question': customer_question, 'response': response}
         prompt = next(prompt for prompt in self.__prompts if prompt[0] == 3)[1].format(**params)
