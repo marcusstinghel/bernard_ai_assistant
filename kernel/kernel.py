@@ -1,9 +1,11 @@
+from datetime import datetime
+from uuid import uuid4
 import ast
 import re
+import os
 
 from artificial_intelligence import ChatGPT
 from database import DataBase
-import os
 
 
 class Kernel:
@@ -32,15 +34,31 @@ class Kernel:
         )
         self.__prompts = self.__database_chat.consult(query='SELECT id, prompt FROM prompts')
 
-    def respond(self, customer_question, customer_uuid: str, owner_user_uuid: str) -> str:
+    def respond(self, customer_question: str, customer_uuid: str, user_uuid: str) -> str:
         entity_and_context = self.__define_entity_and_context(customer_question=customer_question)
         questions = self.__get_questions(entity=entity_and_context[0], context=entity_and_context[1])
         question = self.__define_question(customer_question, questions)
-        customer_id, owner_user_id = self.__get_customer_id_and_user_id(customer_uuid, owner_user_uuid)
-        query = self.__make_query(customer_id, owner_user_id, query=question[4], customer_question=customer_question)
-        response = self.__generate_response(customer_question=customer_question, query=query)
+        customer_id, user_id = self.__get_customer_id_and_user_id(customer_uuid, user_uuid)
+        if question[0] == 4:
+            response = self.__generate_response(customer_question=customer_question)
+        else:
+            query = self.__make_query(customer_id, user_id, query=question[4], customer_question=customer_question)
+            response = self.__generate_response(customer_question=customer_question, query=query)
+        self.__register_message(customer_id, user_id, customer_question, question[0], response)
         return response
-               
+
+    def __register_message(self, customer_id: int, user_id: int, message: str, question_id: int, response: str):
+        query = f'''
+        INSERT INTO messages (
+        uuid, customer_id, user_id, message, question_id, response, is_predefined_question,  created_at, updated_at
+        ) 
+        VALUES (
+        "{uuid4()}", {customer_id}, {user_id}, "{message}", {question_id}, "{response}", 
+        "{1 if question_id != 4 else 0}", "{datetime.now()}", "{datetime.now()}"
+        )
+        '''
+        self.__database_chat.insert(query=query)
+
     def __define_entity_and_context(self, customer_question: str) -> tuple:
         query = 'SELECT DISTINCT entity, context FROM questions'
         result = self.__database_chat.consult(query=query)
@@ -83,9 +101,13 @@ class Kernel:
         query_formatted = query.format(**ast.literal_eval(filled_placeholders))
         return query_formatted
 
-    def __generate_response(self, customer_question: str, query: str) -> str:
-        response = self.__database_octapipe.consult(query=query)[0][0]
-        params = {'customer_question': customer_question, 'response': response}
-        prompt = next(prompt for prompt in self.__prompts if prompt[0] == 3)[1].format(**params)
+    def __generate_response(self, customer_question: str, query: str = None) -> str:
+        if query is None:
+            params = {'customer_question': customer_question}
+            prompt = next(prompt for prompt in self.__prompts if prompt[0] == 5)[1].format(**params)
+        else:
+            response = self.__database_octapipe.consult(query=query)[0][0]
+            params = {'customer_question': customer_question, 'response': response}
+            prompt = next(prompt for prompt in self.__prompts if prompt[0] == 3)[1].format(**params)
         question_response = self.__chat_gpt.respond(prompt=prompt)
         return question_response
