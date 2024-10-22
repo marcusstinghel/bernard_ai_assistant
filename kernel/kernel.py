@@ -57,7 +57,7 @@ class Kernel:
         "{1 if question_id != 4 else 0}", "{datetime.now()}", "{datetime.now()}"
         )
         '''
-        self.__database_chat.insert(query=query)
+        self.__database_chat.insert_or_update(query=query)
 
     def __define_entity_and_context(self, customer_question: str) -> tuple:
         query = 'SELECT DISTINCT entity, context FROM questions'
