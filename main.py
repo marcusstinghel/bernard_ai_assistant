@@ -1,16 +1,34 @@
-from fastapi import FastAPI, APIRouter
-from kernel import Mind
-from models import Content
+from fastapi import FastAPI
 from dotenv import load_dotenv
+
+from controllers import MessagesController
+from models import Content
 
 app = FastAPI()
 
 
-@app.post("/respond")
+@app.get("/messages/historical")
+async def respond_question(customer_uuid: str, user_uuid: str):
+    try:
+        messanger = MessagesController()
+        return messanger.get_historical_messages(customer_uuid, user_uuid)
+    except Exception as e:
+        return {"Error": str(e)}
+
+
+@app.post("/messages/respond")
 async def respond_question(content: Content):
     try:
-        load_dotenv(r'C:\Users\vinio\Projects\octamind-web-api\.env')
-        pipeline_card_controller = Mind()
-        return pipeline_card_controller.respond(content.question, content.customer_uuid, content.owner_user_uuid)
+        messanger = MessagesController()
+        return messanger.post_message(content.question, content.customer_uuid, content.user_uuid)
+    except Exception as e:
+        return {"Error": str(e)}
+
+
+@app.put("/messages/review")
+async def respond_question(content: Content):
+    try:
+        messanger = MessagesController()
+        return messanger.put_message_review(content.message_uuid, content.is_solved)
     except Exception as e:
         return {"Error": str(e)}
