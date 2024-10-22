@@ -16,7 +16,7 @@ class DataBase:
         cursor.close()
         return result
 
-    def insert(self, query: str):
+    def insert_or_update(self, query: str):
         cursor = self.__connection.cursor()
         cursor.execute(query)
         self.__connection.commit()
