@@ -16,6 +16,12 @@ class DataBase:
         cursor.close()
         return result
 
+    def insert(self, query: str):
+        cursor = self.__connection.cursor()
+        cursor.execute(query)
+        self.__connection.commit()
+        cursor.close()
+
     def __verify_connection(self):
         if not self.__connection.is_connected():
             raise Exception("Failed to connect to the database.")
