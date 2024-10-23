@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 from models import Message
 import os
 
