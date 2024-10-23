@@ -106,7 +106,7 @@ class Kernel:
             params = {'customer_question': customer_question}
             prompt = next(prompt for prompt in self.__prompts if prompt[0] == 5)[1].format(**params)
         else:
-            response = self.__database_octapipe.consult(query=query)[0][0]
+            response = self.__database_octapipe.consult(query=query)
             params = {'customer_question': customer_question, 'response': response}
             prompt = next(prompt for prompt in self.__prompts if prompt[0] == 3)[1].format(**params)
         question_response = self.__chat_gpt.respond(prompt=prompt)
