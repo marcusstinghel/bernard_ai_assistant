@@ -7,7 +7,7 @@ from models import Content
 app = FastAPI()
 
 
-@app.get("/messages/historical")
+@app.get("/messages")
 async def respond_question(customer_uuid: str, user_uuid: str):
     try:
         messanger = MessagesController()
@@ -16,7 +16,7 @@ async def respond_question(customer_uuid: str, user_uuid: str):
         return {"Error": str(e)}
 
 
-@app.post("/messages/respond")
+@app.post("/messages")
 async def respond_question(content: Content):
     try:
         messanger = MessagesController()
@@ -25,7 +25,7 @@ async def respond_question(content: Content):
         return {"Error": str(e)}
 
 
-@app.put("/messages/review")
+@app.put("/messages")
 async def respond_question(content: Content):
     try:
         messanger = MessagesController()
