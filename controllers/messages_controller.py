@@ -8,7 +8,6 @@ from kernel import Kernel
 
 class MessagesController:
     def __init__(self):
-        load_dotenv(r'C:\Users\vinio\Projects\bernard\.env')
         self.__database_chat = DataBase(
             db_host=os.getenv('DB_HOST'),
             db_database=os.getenv('DB_DATABASE_CHATGPT'),
