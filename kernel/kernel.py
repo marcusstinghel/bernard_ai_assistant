@@ -34,7 +34,7 @@ class Kernel:
         )
         self.__prompts = self.__database_chat.consult(query='SELECT id, prompt FROM prompts')
 
-    def respond(self, customer_question: str, customer_uuid: str, user_uuid: str) -> str:
+    def respond(self, customer_question: str, customer_uuid: str, user_uuid: str) -> dict:
         entity_and_context = self.__define_entity_and_context(customer_question=customer_question)
         questions = self.__get_questions(entity=entity_and_context[0], context=entity_and_context[1])
         question = self.__define_question(customer_question, questions)
@@ -45,7 +45,7 @@ class Kernel:
             query = self.__make_query(customer_id, user_id, query=question[4], customer_question=customer_question)
             response = self.__generate_response(customer_question=customer_question, query=query)
         self.__register_message(customer_id, user_id, customer_question, question[0], response)
-        return response
+        return {'Question': customer_question, 'Response': response}
 
     def __register_message(self, customer_id: int, user_id: int, message: str, question_id: int, response: str):
         query = f'''
